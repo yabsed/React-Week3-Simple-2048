@@ -1,61 +1,49 @@
 import { useEffect, useState } from "react";
 import { initMap, updateMap, judge } from "../utils/gameLogic";
+import Board from "../components/Board";
 
-const getInitBoard = () => {
-  const savedState = localStorage.getItem("boardState");
-  return savedState ? JSON.parse(savedState) : initMap();
-};
-
-const getInitBoardHistory = () => {
-  const savedPrevStack = localStorage.getItem("boardHistory");
-  if (savedPrevStack) return JSON.parse(savedPrevStack);
-  else return [];
-};
-
-const getInitScore = () => {
-  const savedState = localStorage.getItem("scoreState");
-  return savedState ? JSON.parse(savedState) : 0;
-};
-
-const getInitScoreHistory = () => {
-  const savedScoreHistory = localStorage.getItem("scoreHistory");
-  return savedScoreHistory ? JSON.parse(savedScoreHistory) : [0];
-};
+function getLocalStorage(key, defaultValue) {
+  const saved = localStorage.getItem(key);
+  return saved ? JSON.parse(saved) : defaultValue;
+}
 
 function Game() {
-  const [boardHistory, setBoardHistory] = useState(getInitBoardHistory());
-  const [scoreHistory, setScoreHistory] = useState(getInitScoreHistory());
-  const [board, setBoard] = useState(getInitBoard());
-  const [score, setScore] = useState(getInitScore());
+  const [boardHist, setBoardHist] = useState(getLocalStorage("boardHist", []));
+  const [scoreHist, setScoreHist] = useState(getLocalStorage("scoreHist", [0]));
+  const [board, setBoard] = useState(getLocalStorage("boardState", initMap()));
+  const [score, setScore] = useState(getLocalStorage("scoreState", 0));
 
   useEffect(() => {
-    localStorage.setItem("boardHistory", JSON.stringify(boardHistory));
-    localStorage.setItem("scoreHistory", JSON.stringify(scoreHistory));
+    localStorage.setItem("boardHist", JSON.stringify(boardHist));
+    localStorage.setItem("scoreHist", JSON.stringify(scoreHist));
     localStorage.setItem("boardState", JSON.stringify(board));
     localStorage.setItem("scoreState", JSON.stringify(score));
-  }, [boardHistory, scoreHistory, board, score]);
+  }, [boardHist, scoreHist, board, score]);
 
   const update = (dir) => {
-    if (dir === "reset") {
-      setBoardHistory([]);
-      setScoreHistory([]);
-      setBoard(initMap());
-      setScore(0);
-    } else if (dir === "prev") {
-      if (boardHistory.length > 0 && scoreHistory.length > 1) {
-        const lastBoard = boardHistory[boardHistory.length - 1];
-        const lastScore = scoreHistory[scoreHistory.length - 1];
-        setBoard(lastBoard);
-        setScore(lastScore);
-        setBoardHistory(boardHistory.slice(0, -1));
-        setScoreHistory(scoreHistory.slice(0, -1));
+    switch (dir) {
+      case "reset":
+        setBoard(initMap());
+        setScore(0);
+        setBoardHist([]);
+        setScoreHist([0]);
+        break;
+      case "prev":
+        if (boardHist.length > 0 && scoreHist.length > 1) {
+          setBoard(boardHist[boardHist.length - 1]);
+          setScore(scoreHist[scoreHist.length - 2]);
+          setBoardHist(boardHist.slice(0, -1));
+          setScoreHist(scoreHist.slice(0, -1));
+        }
+        break;
+      default: {
+        setBoardHist((history) => [...history, board]);
+        setScoreHist((history) => [...history, score]);
+        const { board: newBoard, score: addedScore } = updateMap(board, dir);
+        setBoard(newBoard);
+        setScore((prevScore) => prevScore + addedScore);
+        break;
       }
-    } else {
-      setBoardHistory((history) => [...history, board]);
-      setScoreHistory((history) => [...history, score]);
-      const moveResult = updateMap(board, dir);
-      setBoard(moveResult.board);
-      setScore((score) => score + moveResult.score);
     }
   };
 
@@ -92,63 +80,6 @@ function Game() {
       )}
     </>
   );
-}
-
-// Board 컴포넌트 분리
-function Board({ board }) {
-  return (
-    <div>
-      {board.map((row, i) => (
-        <div key={i} style={{ display: "flex" }}>
-          {row.map((cell, j) => (
-            <Cell key={j} value={cell} />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// Cell 컴포넌트 분리
-function Cell({ value }) {
-  const colors = {
-    0: { bg: "#fff", color: "#776e65" },
-    2: { bg: "#ff0000", color: "#fff" },
-    4: { bg: "#ff7f00", color: "#fff" },
-    8: { bg: "#ffff00", color: "#776e65" },
-    16: { bg: "#00ff00", color: "#fff" },
-    32: { bg: "#0000ff", color: "#fff" },
-    64: { bg: "#4b0082", color: "#fff" },
-    128: { bg: "#8b00ff", color: "#fff" },
-    256: { bg: "#ff69b4", color: "#fff" },
-    512: { bg: "#00ced1", color: "#fff" },
-    1024: { bg: "#ffd700", color: "#776e65" },
-    2048: { bg: "#9400d3", color: "#fff" },
-  };
-  const cellStyle = {
-    width: 40,
-    height: 40,
-    border: "1px solid #ccc",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    margin: 2,
-    background: colors[value]?.bg || "#3c3a32",
-    color: colors[value]?.color || "#776e65",
-    fontWeight: "bold",
-    fontSize:
-      value === 0
-        ? "16px"
-        : value < 8
-        ? "20px"
-        : value < 128
-        ? "18px"
-        : value < 1024
-        ? "16px"
-        : "14px",
-  };
-
-  return <div style={cellStyle}>{value !== 0 ? value : ""}</div>;
 }
 
 export default Game;
