@@ -1,43 +1,61 @@
 import { useEffect, useState } from "react";
-import { initMap, updateMap, judge, getScore } from "../utils/gameLogic";
+import { initMap, updateMap, judge } from "../utils/gameLogic";
 
-const getInitState = () => {
-  const savedState = localStorage.getItem("gameState");
+const getInitBoard = () => {
+  const savedState = localStorage.getItem("boardState");
   return savedState ? JSON.parse(savedState) : initMap();
 };
 
-const getInitPrevStack = () => {
-  const savedPrevStack = localStorage.getItem("gamePrevStack");
+const getInitBoardHistory = () => {
+  const savedPrevStack = localStorage.getItem("boardHistory");
   if (savedPrevStack) return JSON.parse(savedPrevStack);
   else return [];
 };
 
+const getInitScore = () => {
+  const savedState = localStorage.getItem("scoreState");
+  return savedState ? JSON.parse(savedState) : 0;
+};
+
+const getInitScoreHistory = () => {
+  const savedScoreHistory = localStorage.getItem("scoreHistory");
+  return savedScoreHistory ? JSON.parse(savedScoreHistory) : [0];
+};
+
 function Game() {
-  const [prevStack, setPrevStack] = useState(getInitPrevStack());
-  const [board, setBoard] = useState(getInitState());
+  const [boardHistory, setBoardHistory] = useState(getInitBoardHistory());
+  const [scoreHistory, setScoreHistory] = useState(getInitScoreHistory());
+  const [board, setBoard] = useState(getInitBoard());
+  const [score, setScore] = useState(getInitScore());
 
   useEffect(() => {
-    localStorage.setItem("gameState", JSON.stringify(board));
-  }, [board]);
-
-  useEffect(() => {
-    localStorage.setItem("gamePrevStack", JSON.stringify(prevStack));
-  }, [prevStack]);
+    localStorage.setItem("boardHistory", JSON.stringify(boardHistory));
+    localStorage.setItem("scoreHistory", JSON.stringify(scoreHistory));
+    localStorage.setItem("boardState", JSON.stringify(board));
+    localStorage.setItem("scoreState", JSON.stringify(score));
+  }, [boardHistory, scoreHistory, board, score]);
 
   const update = (dir) => {
     if (dir === "reset") {
-      const newBoard = initMap();
-      setPrevStack([]);
-      setBoard(newBoard);
+      setBoardHistory([]);
+      setScoreHistory([]);
+      setBoard(initMap());
+      setScore(0);
     } else if (dir === "prev") {
-      if (prevStack.length > 0) {
-        const last = prevStack[prevStack.length - 1];
-        setBoard(last);
-        setPrevStack(prevStack.slice(0, -1));
+      if (boardHistory.length > 0 && scoreHistory.length > 1) {
+        const lastBoard = boardHistory[boardHistory.length - 1];
+        const lastScore = scoreHistory[scoreHistory.length - 1];
+        setBoard(lastBoard);
+        setScore(lastScore);
+        setBoardHistory(boardHistory.slice(0, -1));
+        setScoreHistory(scoreHistory.slice(0, -1));
       }
     } else {
-      setPrevStack((stack) => [...stack, board]);
-      setBoard((board) => updateMap(board, dir));
+      setBoardHistory((history) => [...history, board]);
+      setScoreHistory((history) => [...history, score]);
+      const moveResult = updateMap(board, dir);
+      setBoard(moveResult.board);
+      setScore((score) => score + moveResult.score);
     }
   };
 
@@ -50,47 +68,14 @@ function Game() {
       if (e.key === "d" || e.key === "ArrowRight") update("right");
     };
 
-    let touchStartX = null;
-    let touchStartY = null;
-
-    const handleTouchStart = (e) => {
-      const touch = e.touches[0];
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-    };
-
-    const handleTouchEnd = (e) => {
-      if (judge(board) !== "continue") return;
-      if (touchStartX === null || touchStartY === null) return;
-      const touch = e.changedTouches[0];
-      const dx = touch.clientX - touchStartX;
-      const dy = touch.clientY - touchStartY;
-      if (Math.abs(dx) > Math.abs(dy)) {
-        if (dx > 30) update("right");
-        else if (dx < -30) update("left");
-      } else {
-        if (dy > 30) update("down");
-        else if (dy < -30) update("up");
-      }
-      touchStartX = null;
-      touchStartY = null;
-    };
-
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("touchstart", handleTouchStart);
-    window.addEventListener("touchend", handleTouchEnd);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchend", handleTouchEnd);
-    };
-  }, [board, prevStack]);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [board]);
 
   return (
     <>
       <h1>Hello 2048!</h1>
-      <h2>Current Score : {getScore(board)}</h2>
+      <h2>Current Score : {score}</h2>
       <div>
         <button onClick={() => update("up")}>Up</button>
         <button onClick={() => update("down")}>Down</button>
@@ -100,11 +85,11 @@ function Game() {
       <Board board={board} />
       <button onClick={() => update("reset")}>Reset</button>
       <button onClick={() => update("prev")}>Prev</button>
-      {judge(board) === "continue"
-        ? null
-        : judge(board) === "won"
-        ? <h2>You Won</h2>
-        : <h2>You Lose!</h2>}
+      {judge(board) === "continue" ? null : judge(board) === "won" ? (
+        <h2>You Won</h2>
+      ) : (
+        <h2>You Lose!</h2>
+      )}
     </>
   );
 }

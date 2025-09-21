@@ -1,7 +1,7 @@
 // src/utils/gameLogic.js
 
 export const BOARD_SIZE = 4;
-export const WINNING_COND = 128; 
+export const WINNING_COND = 128;
 
 const rotate = (board, times = 1) => {
   let rotated = board;
@@ -12,11 +12,13 @@ const rotate = (board, times = 1) => {
 };
 
 const moveAndMergeLeft = (board) => {
-  return board.map((row) => {
+  let totalScore = 0;
+  const newBoard = board.map((row) => {
     const filtered = row.filter((cell) => cell !== 0);
     for (let i = 0; i < filtered.length - 1; i++) {
       if (filtered[i] === filtered[i + 1]) {
         filtered[i] *= 2;
+        totalScore += filtered[i]; // 합쳐진 블록의 점수를 누적
         filtered[i + 1] = 0;
       }
     }
@@ -24,6 +26,8 @@ const moveAndMergeLeft = (board) => {
     while (merged.length < BOARD_SIZE) merged.push(0);
     return merged;
   });
+
+  return { board: newBoard, score: totalScore };
 };
 
 export const move = (board, dir) => {
@@ -35,14 +39,16 @@ export const move = (board, dir) => {
   if (dir === "down") workingBoard = rotate(workingBoard, 1);
 
   // Move and merge left
-  workingBoard = moveAndMergeLeft(workingBoard);
+  const result = moveAndMergeLeft(workingBoard);
+  workingBoard = result.board;
+  const score = result.score;
 
   // Rotate back to original orientation
   if (dir === "up") workingBoard = rotate(workingBoard, 1);
   if (dir === "right") workingBoard = rotate(workingBoard, 2);
   if (dir === "down") workingBoard = rotate(workingBoard, 3);
 
-  return workingBoard;
+  return { board: workingBoard, score: score };
 };
 
 // ====================================== //
@@ -95,10 +101,6 @@ export const getBoardWithNewBlock = (board) => {
   return newBoard;
 };
 
-export const getScore = (board) => {
-  return board.flat().reduce((sum, cell) => sum + cell, 0);
-};
-
 export const emptyMap = () => {
   return Array(4)
     .fill()
@@ -112,10 +114,12 @@ export const initMap = () => {
 };
 
 export const updateMap = (prevBoard, dir) => {
-  const movedBoard = move(prevBoard, dir);
+  const moveResult = move(prevBoard, dir);
+  const movedBoard = moveResult.board;
+
   return isBoardEqual(prevBoard, movedBoard)
-    ? movedBoard
-    : getBoardWithNewBlock(movedBoard);
+    ? { board: movedBoard, score: moveResult.score }
+    : { board: getBoardWithNewBlock(movedBoard), score: moveResult.score };
 };
 
 // =========================================== //
@@ -123,17 +127,18 @@ export const updateMap = (prevBoard, dir) => {
 export const isLost = (board) => {
   const directions = ["up", "down", "left", "right"];
   for (let dir of directions) {
-    const movedBoard = move(board, dir);
+    const moveResult = move(board, dir);
+    const movedBoard = moveResult.board;
     if (!isBoardEqual(board, movedBoard)) {
       return false; // At least one move is possible
     }
   }
   return true; // No moves possible, game is lost
-}
+};
 
 export const isWon = (board) => {
   return board.flat().some((cell) => cell >= WINNING_COND);
-}
+};
 
 export const judge = (board) => {
   if (isWon(board)) return "won";
