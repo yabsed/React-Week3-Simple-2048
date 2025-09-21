@@ -38,16 +38,16 @@ function Game() {
 
       // Rotate board to simplify movement logic
       if (dir === "up") workingBoard = updateBoard.rotate(workingBoard, 3);
-      if (dir === "right") workingBoard = updateBoard.rotate(workingBoard, 1);
-      if (dir === "down") workingBoard = updateBoard.rotate(workingBoard, 2);
+      if (dir === "right") workingBoard = updateBoard.rotate(workingBoard, 2);
+      if (dir === "down") workingBoard = updateBoard.rotate(workingBoard, 1);
 
       // Move and merge left
       workingBoard = updateBoard.moveAndMergeLeft(workingBoard);
 
       // Rotate back to original orientation
       if (dir === "up") workingBoard = updateBoard.rotate(workingBoard, 1);
-      if (dir === "right") workingBoard = updateBoard.rotate(workingBoard, 3);
-      if (dir === "down") workingBoard = updateBoard.rotate(workingBoard, 2);
+      if (dir === "right") workingBoard = updateBoard.rotate(workingBoard, 2);
+      if (dir === "down") workingBoard = updateBoard.rotate(workingBoard, 3);
 
       return workingBoard;
     },
@@ -108,10 +108,24 @@ function Game() {
 
   console.log(board);
 
+  const update = (dir) => {
+    setBoard((prevBoard) => {
+      const movedBoard = updateBoard.move(prevBoard, dir);
+      const newBoard = boardUtils.getBoardWithNewBlock(movedBoard);
+      return newBoard;
+    });
+  };
+
   return (
     <>
       <h1>Hello 2048!</h1>
       <h2>Current Score : {boardUtils.getScore()}</h2>
+      <div>
+        <button onClick={() => update("up")}>Up</button>
+        <button onClick={() => update("down")}>Down</button>
+        <button onClick={() => update("left")}>Left</button>
+        <button onClick={() => update("right")}>Right</button>
+      </div>
       <Board board={board} />
     </>
   );
