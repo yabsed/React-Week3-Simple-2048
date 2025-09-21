@@ -7,7 +7,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/Nomadcoding-React/" element={<Game />} />
+        <Route path="/React-Week3-Simple-2048/" element={<Game />} />
       </Routes>
     </Router>
   );
