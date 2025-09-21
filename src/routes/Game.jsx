@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import * as logic from "../utils/gameLogic";
 
 function Game() {
   const n = 4;
@@ -9,107 +10,21 @@ function Game() {
       .map(() => Array(n).fill(0))
   );
 
-  const updateBoard = {
-    rotate: (board, times = 1) => {
-      let rotated = board;
-      for (let t = 0; t < times; t++) {
-        rotated = rotated[0].map((_, i) =>
-          rotated.map((row) => row[i]).reverse()
-        );
-      }
-      return rotated;
-    },
-    moveAndMergeLeft: (board) => {
-      return board.map((row) => {
-        const filtered = row.filter((cell) => cell !== 0);
-        for (let i = 0; i < filtered.length - 1; i++) {
-          if (filtered[i] === filtered[i + 1]) {
-            filtered[i] *= 2;
-            filtered[i + 1] = 0;
-          }
-        }
-        const merged = filtered.filter((cell) => cell !== 0);
-        while (merged.length < n) merged.push(0);
-        return merged;
-      });
-    },
-    move: (board, dir) => {
-      let workingBoard = board.map((row) => row.slice());
-
-      // Rotate board to simplify movement logic
-      if (dir === "up") workingBoard = updateBoard.rotate(workingBoard, 3);
-      if (dir === "right") workingBoard = updateBoard.rotate(workingBoard, 2);
-      if (dir === "down") workingBoard = updateBoard.rotate(workingBoard, 1);
-
-      // Move and merge left
-      workingBoard = updateBoard.moveAndMergeLeft(workingBoard);
-
-      // Rotate back to original orientation
-      if (dir === "up") workingBoard = updateBoard.rotate(workingBoard, 1);
-      if (dir === "right") workingBoard = updateBoard.rotate(workingBoard, 2);
-      if (dir === "down") workingBoard = updateBoard.rotate(workingBoard, 3);
-
-      return workingBoard;
-    },
-  };
-
-  const boardUtils = {
-    getScore: () => {
-      return board.flat().reduce((sum, cell) => sum + cell, 0);
-    },
-
-    // Get List of Empty Cells Tuple [x, y]
-    getEmptyCells: (board) => {
-      const emptyCells = [];
-
-      board.forEach((row, i) =>
-        row.forEach((cell, j) => {
-          if (cell === 0) emptyCells.push([i, j]);
-        })
-      );
-      return emptyCells;
-    },
-
-    // The Board is Full of Non-Zero Blocks
-    isFull: (board) => {
-      return boardUtils.getEmptyCells(board).length === 0;
-    },
-
-    // Add one block onto currentBoard and return it as newBoard
-    getBoardWithNewBlock: (board) => {
-      if (boardUtils.isFull(board)) {
-        return board; // 빈 칸이 없으면 그대로 반환
-      }
-
-      const emptyCells = boardUtils.getEmptyCells(board);
-
-      // fix point
-      const randomIndex = Math.floor(Math.random() * emptyCells.length);
-      const [row, col] = emptyCells[randomIndex];
-
-      // fix value
-      const newValue = Math.random() < 0.9 ? 2 : 4;
-
-      // copy and modify
-      const newBoard = board.map((arr) => arr.slice());
-      newBoard[row][col] = newValue;
-
-      return newBoard;
-    },
-  };
-
   useEffect(() => {
     // Update Board
-    const boardWithOneBlock = boardUtils.getBoardWithNewBlock(board);
+    const boardWithOneBlock = logic.getBoardWithNewBlock(board);
     const boardWithTwoBlocks =
-      boardUtils.getBoardWithNewBlock(boardWithOneBlock);
+      logic.getBoardWithNewBlock(boardWithOneBlock);
     setBoard(boardWithTwoBlocks);
   }, []);
 
   const update = (dir) => {
     setBoard((prevBoard) => {
-      const movedBoard = updateBoard.move(prevBoard, dir);
-      const newBoard = boardUtils.getBoardWithNewBlock(movedBoard);
+      const movedBoard = logic.move(prevBoard, dir);
+      let newBoard = movedBoard;
+      if (!logic.isBoardEqual(prevBoard, movedBoard)) {
+        newBoard = logic.getBoardWithNewBlock(movedBoard);
+      }
       return newBoard;
     });
   };
@@ -128,7 +43,7 @@ function Game() {
   return (
     <>
       <h1>Hello 2048!</h1>
-      <h2>Current Score : {boardUtils.getScore()}</h2>
+      <h2>Current Score : {logic.getScore(board)}</h2>
       <Board board={board} />
     </>
   );
