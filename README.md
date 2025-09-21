@@ -10,8 +10,12 @@
 |            | ⏪ (중) undo 버튼을 누르면 이전 턴의 상태로 돌아갑니다. | ✅ |
 |            | 🎞️ (상) 블럭 이동 시 애니메이션이 나타납니다.           | ❌ |
 
+## 구현 결과
+
+![Sample Image](image.png)
+
 ## 배포 링크
 
-[Hello 2048](https://yabsed.github.io/React-Week3-Simple-2048)
+[Hello 2048!](https://yabsed.github.io/React-Week3-Simple-2048)
 
 
