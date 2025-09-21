@@ -2,17 +2,28 @@ import { useEffect, useState } from "react";
 import * as logic from "../utils/gameLogic";
 
 function Game() {
+  const getInitialState = () => {
+    const savedState = localStorage.getItem("gameState");
+    return savedState ? JSON.parse(savedState) : logic.initMap();
+  };
 
-  const [board, setBoard] = useState(logic.initMap());
+  const [board, setBoard] = useState(getInitialState());
 
-  const resetBoard = () => setBoard(logic.initMap()); 
+  useEffect(() => {
+    localStorage.setItem("gameState", JSON.stringify(board));
+  }, [board]);
 
   const update = (dir) => {
-    setBoard((prevBoard) => logic.updateMap(prevBoard, dir));
+    setBoard((prevBoard) => {
+      const newBoard =
+        dir === "reset" ? logic.initMap() : logic.updateMap(prevBoard, dir);
+      return newBoard;
+    });
   };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (logic.judge(board) !== "continue") return;
       if (e.key === "w" || e.key === "ArrowUp") update("up");
       if (e.key === "s" || e.key === "ArrowDown") update("down");
       if (e.key === "a" || e.key === "ArrowLeft") update("left");
@@ -20,14 +31,14 @@ function Game() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [board]);
 
   return (
     <>
       <h1>Hello 2048!</h1>
       <h2>Current Score : {logic.getScore(board)}</h2>
       <Board board={board} />
-      <button onClick={resetBoard}>Reset</button>
+      <button onClick={() => update("reset")}>Reset</button>
     </>
   );
 }

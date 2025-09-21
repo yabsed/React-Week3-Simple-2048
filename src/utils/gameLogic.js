@@ -1,6 +1,7 @@
 // src/utils/gameLogic.js
 
 export const BOARD_SIZE = 4;
+export const WINNING_COND = 8; 
 
 const rotate = (board, times = 1) => {
   let rotated = board;
@@ -115,4 +116,27 @@ export const updateMap = (prevBoard, dir) => {
   return isBoardEqual(prevBoard, movedBoard)
     ? movedBoard
     : getBoardWithNewBlock(movedBoard);
+};
+
+// =========================================== //
+
+export const isLost = (board) => {
+  const directions = ["up", "down", "left", "right"];
+  for (let dir of directions) {
+    const movedBoard = move(board, dir);
+    if (!isBoardEqual(board, movedBoard)) {
+      return false; // At least one move is possible
+    }
+  }
+  return true; // No moves possible, game is lost
+}
+
+export const isWon = (board) => {
+  return board.flat().some((cell) => cell >= WINNING_COND);
+}
+
+export const judge = (board) => {
+  if (isWon(board)) return "won";
+  if (isLost(board)) return "lost";
+  return "continue";
 };
