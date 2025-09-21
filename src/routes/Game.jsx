@@ -60,6 +60,11 @@ function Game() {
       <Board board={board} />
       <button onClick={() => update("reset")}>Reset</button>
       <button onClick={() => update("prev")}>Prev</button>
+      {judge(board) === "continue"
+        ? null
+        : judge(board) === "won"
+        ? <h2>You Won</h2>
+        : <h2>You Lose!</h2>}
     </>
   );
 }
