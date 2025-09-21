@@ -49,14 +49,54 @@ function Game() {
       if (e.key === "a" || e.key === "ArrowLeft") update("left");
       if (e.key === "d" || e.key === "ArrowRight") update("right");
     };
+
+    let touchStartX = null;
+    let touchStartY = null;
+
+    const handleTouchStart = (e) => {
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    };
+
+    const handleTouchEnd = (e) => {
+      if (judge(board) !== "continue") return;
+      if (touchStartX === null || touchStartY === null) return;
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStartX;
+      const dy = touch.clientY - touchStartY;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx > 30) update("right");
+        else if (dx < -30) update("left");
+      } else {
+        if (dy > 30) update("down");
+        else if (dy < -30) update("up");
+      }
+      touchStartX = null;
+      touchStartY = null;
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
   }, [board, prevStack]);
 
   return (
     <>
       <h1>Hello 2048!</h1>
       <h2>Current Score : {getScore(board)}</h2>
+      <div>
+        <button onClick={() => update("up")}>Up</button>
+        <button onClick={() => update("down")}>Down</button>
+        <button onClick={() => update("left")}>Left</button>
+        <button onClick={() => update("right")}>Right</button>
+      </div>
       <Board board={board} />
       <button onClick={() => update("reset")}>Reset</button>
       <button onClick={() => update("prev")}>Prev</button>
