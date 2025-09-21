@@ -106,8 +106,6 @@ function Game() {
     setBoard(boardWithTwoBlocks);
   }, []);
 
-  console.log(board);
-
   const update = (dir) => {
     setBoard((prevBoard) => {
       const movedBoard = updateBoard.move(prevBoard, dir);
@@ -116,16 +114,21 @@ function Game() {
     });
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "w" || e.key === "ArrowUp") update("up");
+      if (e.key === "s" || e.key === "ArrowDown") update("down");
+      if (e.key === "a" || e.key === "ArrowLeft") update("left");
+      if (e.key === "d" || e.key === "ArrowRight") update("right");
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <>
       <h1>Hello 2048!</h1>
       <h2>Current Score : {boardUtils.getScore()}</h2>
-      <div>
-        <button onClick={() => update("up")}>Up</button>
-        <button onClick={() => update("down")}>Down</button>
-        <button onClick={() => update("left")}>Left</button>
-        <button onClick={() => update("right")}>Right</button>
-      </div>
       <Board board={board} />
     </>
   );
