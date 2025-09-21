@@ -1,7 +1,7 @@
 // src/utils/gameLogic.js
 
 export const BOARD_SIZE = 4;
-export const WINNING_COND = 8; 
+export const WINNING_COND = 128; 
 
 const rotate = (board, times = 1) => {
   let rotated = board;
