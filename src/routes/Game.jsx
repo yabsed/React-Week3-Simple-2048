@@ -2,31 +2,13 @@ import { useEffect, useState } from "react";
 import * as logic from "../utils/gameLogic";
 
 function Game() {
-  const n = 4;
 
-  const [board, setBoard] = useState(
-    Array(4)
-      .fill()
-      .map(() => Array(n).fill(0))
-  );
+  const [board, setBoard] = useState(logic.initMap());
 
-  useEffect(() => {
-    // Update Board
-    const boardWithOneBlock = logic.getBoardWithNewBlock(board);
-    const boardWithTwoBlocks =
-      logic.getBoardWithNewBlock(boardWithOneBlock);
-    setBoard(boardWithTwoBlocks);
-  }, []);
+  const resetBoard = () => setBoard(logic.initMap()); 
 
   const update = (dir) => {
-    setBoard((prevBoard) => {
-      const movedBoard = logic.move(prevBoard, dir);
-      let newBoard = movedBoard;
-      if (!logic.isBoardEqual(prevBoard, movedBoard)) {
-        newBoard = logic.getBoardWithNewBlock(movedBoard);
-      }
-      return newBoard;
-    });
+    setBoard((prevBoard) => logic.updateMap(prevBoard, dir));
   };
 
   useEffect(() => {
@@ -45,6 +27,7 @@ function Game() {
       <h1>Hello 2048!</h1>
       <h2>Current Score : {logic.getScore(board)}</h2>
       <Board board={board} />
+      <button onClick={resetBoard}>Reset</button>
     </>
   );
 }

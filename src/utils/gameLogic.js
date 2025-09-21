@@ -97,3 +97,22 @@ export const getBoardWithNewBlock = (board) => {
 export const getScore = (board) => {
   return board.flat().reduce((sum, cell) => sum + cell, 0);
 };
+
+export const emptyMap = () => {
+  return Array(4)
+    .fill()
+    .map(() => Array(BOARD_SIZE).fill(0));
+};
+
+export const initMap = () => {
+  const boardWithOneBlock = getBoardWithNewBlock(emptyMap());
+  const boardWithTwoBlocks = getBoardWithNewBlock(boardWithOneBlock);
+  return boardWithTwoBlocks;
+};
+
+export const updateMap = (prevBoard, dir) => {
+  const movedBoard = move(prevBoard, dir);
+  return isBoardEqual(prevBoard, movedBoard)
+    ? movedBoard
+    : getBoardWithNewBlock(movedBoard);
+};
