@@ -97,7 +97,7 @@ export const getBoardWithNewBlock = (board) => {
 };
 
 export const emptyMap = () => {
-  return Array(4)
+  return Array(BOARD_SIZE)
     .fill()
     .map(() => Array(BOARD_SIZE).fill(0));
 };
