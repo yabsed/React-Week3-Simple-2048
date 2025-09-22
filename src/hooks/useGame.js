@@ -4,6 +4,7 @@ import {
   updateMap,
   getMoveTransitions,
   judge,
+  isBoardEqual,
 } from "../utils/gameLogic";
 
 function getLocalStorage(key, defaultValue) {
@@ -49,25 +50,28 @@ export function useGame() {
         }
         break;
       default: {
-        setBoardHist((history) => [...history, board]);
-        setScoreHist((history) => [...history, score]);
         const {
           movedBoard: newBoard,
           transitions: newTransitions,
           score: addedScore,
         } = getMoveTransitions(board, dir);
 
-        // 애니메이션 시작
-        setIsAnimating(true);
-        setTransitions(newTransitions);
+        if (!isBoardEqual(newBoard, board)) {
+          setBoardHist((history) => [...history, board]);
+          setScoreHist((history) => [...history, score]);
 
-        // 애니메이션 완료 후 보드 업데이트
-        setTimeout(() => {
-          setBoard(newBoard);
-          setScore((prevScore) => prevScore + addedScore);
-          setIsAnimating(false);
-          setTransitions([]);
-        }, 300); // 300ms 애니메이션 시간
+          // 애니메이션 시작
+          setIsAnimating(true);
+          setTransitions(newTransitions);
+
+          // 애니메이션 완료 후 보드 업데이트
+          setTimeout(() => {
+            setBoard(newBoard);
+            setScore((prevScore) => prevScore + addedScore);
+            setIsAnimating(false);
+            setTransitions([]);
+          }, 300); // 300ms 애니메이션 시간
+        }
         break;
       }
     }

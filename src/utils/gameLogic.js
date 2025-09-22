@@ -236,7 +236,7 @@ export const getMoveTransitions = (board, dir) => {
 
   const emptyCells = getEmptyCells(movedBoard);
   let finalBoard = movedBoard;
-  if (emptyCells.length > 0) {
+  if (emptyCells.length > 0 && !isBoardEqual(movedBoard, board)) {
     // 새 블록 추가 위치와 값 추출
     const randomIndex = Math.floor(Math.random() * emptyCells.length);
     const [row, col] = emptyCells[randomIndex];
