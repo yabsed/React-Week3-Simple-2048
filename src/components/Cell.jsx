@@ -21,7 +21,6 @@ function Cell({ value }) {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    margin: 2,
     background: colors[value]?.bg || "#3c3a32",
     color: colors[value]?.color || "#776e65",
     fontWeight: "bold",

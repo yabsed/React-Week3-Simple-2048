@@ -20,22 +20,24 @@ function Board({ board, transitions, isAnimating }) {
   return (
     <div style={boardStyle}>
       {/* 배경 그리드 */}
-      {board.map((row, i) => (
-        <div key={`row_${i}`} style={{ display: "flex", position: "absolute", top: i * CELL_TOTAL_SIZE, left: 0 }}>
-          {row.map((cell, j) => (
-            <div
-              key={`bg_${i}_${j}`}
-              style={{
-                width: CELL_SIZE,
-                height: CELL_SIZE,
-                margin: CELL_MARGIN,
-                backgroundColor: "rgba(238, 228, 218, 0.35)",
-                borderRadius: "3px",
-              }}
-            />
-          ))}
-        </div>
-      ))}
+      {Array.from({ length: 4 * 4 }).map((_, index) => {
+        const i = Math.floor(index / 4);
+        const j = index % 4;
+        return (
+          <div
+            key={`bg_${i}_${j}`}
+            style={{
+              position: "absolute",
+              transform: `translate(${j * CELL_TOTAL_SIZE}px, ${i * CELL_TOTAL_SIZE}px)`,
+              width: CELL_SIZE,
+              height: CELL_SIZE,
+              margin: CELL_MARGIN,
+              backgroundColor: "rgba(238, 228, 218, 0.35)",
+              borderRadius: "3px",
+            }}
+          />
+        );
+      })}
       {/* 정적 타일들 (애니메이션이 없을 때) */}
       {!isAnimating &&
         board.map((row, i) => (
