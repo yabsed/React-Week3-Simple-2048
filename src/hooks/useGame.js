@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { initMap, updateMap } from "../utils/gameLogic";
+import { initMap, updateMap, judge } from "../utils/gameLogic";
 
 function getLocalStorage(key, defaultValue) {
   const saved = localStorage.getItem(key);
   return saved ? JSON.parse(saved) : defaultValue;
 }
 
-export function useGameState() {
+export function useGame() {
   const [boardHist, setBoardHist] = useState(getLocalStorage("boardHist", []));
   const [scoreHist, setScoreHist] = useState(getLocalStorage("scoreHist", [0]));
   const [board, setBoard] = useState(getLocalStorage("boardState", initMap()));
@@ -48,11 +48,38 @@ export function useGameState() {
     }
   };
 
+  // 컨트롤 핸들러들
+  const handleReset = () => {
+    updateGameState("reset");
+  };
+
+  const handlePrev = () => {
+    if (boardHist.length > 0 && scoreHist.length > 1) {
+      updateGameState("prev");
+    }
+  };
+
+  // 키보드 이벤트 처리
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (judge(board) !== "continue") return;
+
+      if (e.key === "w" || e.key === "ArrowUp") updateGameState("up");
+      if (e.key === "s" || e.key === "ArrowDown") updateGameState("down");
+      if (e.key === "a" || e.key === "ArrowLeft") updateGameState("left");
+      if (e.key === "d" || e.key === "ArrowRight") updateGameState("right");
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [board]);
+
   return {
     board,
     score,
     boardHist,
     scoreHist,
-    updateGameState,
+    handleReset,
+    handlePrev,
   };
 }

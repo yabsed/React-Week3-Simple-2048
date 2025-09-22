@@ -35,7 +35,6 @@ function Cell({ value }) {
         : value < 1024
         ? "16px"
         : "14px",
-    transition: "background-color 0.2s ease-in-out, transform 0.1s ease-in-out",
   };
 
   return <div style={cellStyle}>{value !== 0 ? value : ""}</div>;
