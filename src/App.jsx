@@ -5,8 +5,16 @@ import { judge } from "./utils/gameLogic";
 
 function App() {
   // 게임 상태 및 컨트롤 관리
-  const { board, score, boardHist, scoreHist, handleReset, handlePrev } =
-    useGame();
+  const {
+    board,
+    score,
+    boardHist,
+    scoreHist,
+    transitions,
+    isAnimating,
+    handleReset,
+    handlePrev,
+  } = useGame();
 
   // 게임 결과
   const gameResult = judge(board);
@@ -24,7 +32,11 @@ function App() {
         <button onClick={handleReset}>Reset</button>
         <button onClick={handlePrev}>Prev</button>
       </div>
-      <Board board={board} />
+      <Board
+        board={board}
+        transitions={transitions}
+        isAnimating={isAnimating}
+      />
     </>
   );
 }

@@ -201,23 +201,27 @@ export const getMoveTransitions = (board, dir) => {
 
       // "합쳐져서 사라진 블록"에 대한 정보 추가
       if (tile.mergedFrom) {
+        // 첫 번째 블록이 이동해서 합쳐짐
+        transitions.push({
+          id: tileIdCounter++,
+          value: tile.value / 2, // 병합 전 원래 값
+          prev: [tile.r, tile.c],
+          cur: [newR, newC],
+        });
+        // 두 번째 블록이 이동해서 합쳐짐
+        transitions.push({
+          id: tileIdCounter++,
+          value: tile.mergedFrom.value, // 병합 전 원래 값
+          prev: [tile.mergedFrom.r, tile.mergedFrom.c],
+          cur: [newR, newC],
+        });
+        // 새로운 합쳐진 블록이 나타남
         transitions.push({
           id: tileIdCounter++,
           value: tile.value,
           prev: null,
           cur: [newR, newC],
-        });
-        transitions.push({
-          id: tileIdCounter++,
-          value: tile.value,
-          prev: [tile.r, tile.c],
-          cur: null,
-        });
-        transitions.push({
-          id: tileIdCounter++,
-          value: tile.mergedFrom.value / 2, // 병합 전 원래 값
-          prev: [tile.mergedFrom.r, tile.mergedFrom.c],
-          cur: null, // 이 블록은 사라짐
+          isNew: true,
         });
       } else {
         transitions.push({
