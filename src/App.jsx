@@ -21,7 +21,7 @@ function App() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}> 
-      <h1>Hello 2048!</h1>
+      <h1>Hello, 2048!</h1>
       <h2>Current Score : {score}</h2>
       {gameResult === "continue" ? null : gameResult === "won" ? (
         <h2>You Won</h2>

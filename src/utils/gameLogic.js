@@ -141,119 +141,150 @@ export const judge = (board) => {
   return "continue";
 };
 
-export const getMoveTransitions = (board, dir) => {
-  let tileIdCounter = 0;
+// ======================================= //
 
-  const size = board.length;
+// Rotate board 90 degrees clockwise
+const rotateBoard = (board) => {
+  return board[0].map((_, colIndex) =>
+    board.map((row) => row[colIndex]).reverse()
+  );
+};
+
+// Rotate transition coordinates for one rotation
+const rotateTransitions = (transitions) =>
+  transitions.map((tr) => ({
+    ...tr,
+    prev: tr.prev && [tr.prev[1], BOARD_SIZE - 1 - tr.prev[0]],
+    cur: tr.cur && [tr.cur[1], BOARD_SIZE - 1 - tr.cur[0]],
+  }));
+
+// Rotate board and transitions together 'times' times
+const rotateWithTransitions = (board, transitions, times) => {
+  for (let i = 0; i < times; i++) {
+    board = rotateBoard(board);
+    transitions = rotateTransitions(transitions);
+  }
+  return { board, transitions };
+};
+
+const moveAndMergeLeftWithTransitions = (board) => {
   const transitions = [];
-  const movedBoard = Array(size)
-    .fill(0)
-    .map(() => Array(size).fill(0));
-  let score = 0;
+  let totalScore = 0;
+  let id = 0;
 
-  const isHorizontal = dir === "left" || dir === "right";
-  const isForward = dir === "right" || dir === "down";
+  const newBoard = board.map((row, rowIndex) => {
+    // 필터링: 0이 아닌 값만 추출
+    const filtered = row
+      .map((value, colIndex) => ({ value, colIndex }))
+      .filter((cell) => cell.value !== 0);
 
-  for (let i = 0; i < size; i++) {
-    // 1. 한 줄(행 또는 열)씩 처리
-    const lineCoords = [];
-    for (let j = 0; j < size; j++) {
-      lineCoords.push(isHorizontal ? [i, j] : [j, i]);
-    }
-
-    let tileObjects = lineCoords
-      .map(([r, c]) => ({ value: board[r][c], r, c }))
-      .filter((t) => t.value !== 0);
-
-    if (isForward) {
-      tileObjects.reverse();
-    }
-
-    // 2. 타일 병합
-    const mergedTiles = [];
-    for (let j = 0; j < tileObjects.length; j++) {
+    const merged = [];
+    let i = 0;
+    while (i < filtered.length) {
       if (
-        j + 1 < tileObjects.length &&
-        tileObjects[j].value === tileObjects[j + 1].value
+        i + 1 < filtered.length &&
+        filtered[i].value === filtered[i + 1].value
       ) {
-        const survivor = tileObjects[j];
-        const victim = tileObjects[j + 1];
+        // 병합
+        const mergedValue = filtered[i].value * 2;
+        totalScore += mergedValue;
 
-        survivor.value *= 2;
-        score += survivor.value;
-
-        // 사라질 타일(victim) 정보를 survivor에 임시 저장
-        survivor.mergedFrom = victim;
-
-        mergedTiles.push(survivor);
-        j++; // victim 타일은 건너뜀
-      } else {
-        mergedTiles.push(tileObjects[j]);
-      }
-    }
-
-    // 3. 새 위치 계산 및 전환 정보 객체 생성
-    const newLineCoords = isForward ? lineCoords.slice().reverse() : lineCoords;
-
-    mergedTiles.forEach((tile, index) => {
-      const [newR, newC] = newLineCoords[index];
-      movedBoard[newR][newC] = tile.value;
-
-      // "합쳐져서 사라진 블록"에 대한 정보 추가
-      if (tile.mergedFrom) {
-        // 첫 번째 블록이 이동해서 합쳐짐
         transitions.push({
-          id: tileIdCounter++,
-          value: tile.value / 2, // 병합 전 원래 값
-          prev: [tile.r, tile.c],
-          cur: [newR, newC],
+          id: id++,
+          value: filtered[i].value,
+          prev: [rowIndex, filtered[i].colIndex],
+          cur: [rowIndex, merged.length],
         });
-        // 두 번째 블록이 이동해서 합쳐짐
         transitions.push({
-          id: tileIdCounter++,
-          value: tile.mergedFrom.value, // 병합 전 원래 값
-          prev: [tile.mergedFrom.r, tile.mergedFrom.c],
-          cur: [newR, newC],
+          id: id++,
+          value: filtered[i + 1].value,
+          prev: [rowIndex, filtered[i + 1].colIndex],
+          cur: [rowIndex, merged.length],
         });
-        // 새로운 합쳐진 블록이 나타남
         transitions.push({
-          id: tileIdCounter++,
-          value: tile.value,
+          id: id++,
+          value: mergedValue,
           prev: null,
-          cur: [newR, newC],
+          cur: [rowIndex, merged.length],
           isNew: true,
         });
+
+        merged.push(mergedValue);
+        i += 2;
       } else {
         transitions.push({
-          id: tileIdCounter++,
-          value: tile.value,
-          prev: [tile.r, tile.c],
-          cur: [newR, newC],
+          id: id++,
+          value: filtered[i].value,
+          prev: [rowIndex, filtered[i].colIndex],
+          cur: [rowIndex, merged.length],
         });
+        merged.push(filtered[i].value);
+        i += 1;
       }
-    });
+    }
+
+    while (merged.length < board.length) merged.push(0);
+    return merged;
+  });
+
+  return { board: newBoard, transitions, score: totalScore };
+};
+
+export const getMoveTransitions = (board, dir) => {
+  const rotations = { up: 3, right: 2, down: 1, left: 0 }[dir] || 0;
+  const backRotations = (4 - rotations) % 4;
+
+  // Rotate board and transitions
+  let { board: rotatedBoard, transitions } = rotateWithTransitions(
+    board.map((row) => row.slice()),
+    [],
+    rotations
+  );
+
+  // Move and merge left with transitions
+  const {
+    board: movedBoard,
+    transitions: moveTransitions,
+    score,
+  } = moveAndMergeLeftWithTransitions(rotatedBoard);
+
+  // Rotate back
+  let { board: finalBoard, transitions: finalTransitions } =
+    rotateWithTransitions(movedBoard, moveTransitions, backRotations);
+
+  // Add new block if board changed
+  if (!isBoardEqual(board, finalBoard)) {
+    addNewBlockWithTransition(finalBoard, finalTransitions);
   }
 
-  const emptyCells = getEmptyCells(movedBoard);
-  let finalBoard = movedBoard;
-  if (emptyCells.length > 0 && !isBoardEqual(movedBoard, board)) {
-    // 새 블록 추가 위치와 값 추출
-    const randomIndex = Math.floor(Math.random() * emptyCells.length);
-    const [row, col] = emptyCells[randomIndex];
-    const newValue = Math.random() < 0.9 ? 2 : 4;
+  return {
+    movedBoard: finalBoard,
+    transitions: finalTransitions,
+    score,
+  };
+};
 
-    finalBoard = movedBoard.map((arr) => arr.slice());
-    finalBoard[row][col] = newValue;
+// Add new block with transition if board changed
+const addNewBlockWithTransition = (board, transitions) => {
+  // emptyCells
+  const emptyCells = getEmptyCells(board);
+  if (!emptyCells.length) return;
 
-    // 새 블록의 transition 정보 추가
-    transitions.push({
-      id: tileIdCounter++,
-      value: newValue,
-      prev: null,
-      cur: [row, col],
-      isNew: true,
-    });
-  }
+  // row, col
+  const [row, col] = emptyCells[Math.floor(Math.random() * emptyCells.length)];
 
-  return { movedBoard: finalBoard, transitions, score };
+  // newValue
+  const newValue = Math.random() < 0.9 ? 2 : 4;
+
+  // update board
+  board[row][col] = newValue;
+
+  // update transition
+  transitions.push({
+    id: transitions.length ? Math.max(...transitions.map((t) => t.id)) + 1 : 0,
+    value: newValue,
+    prev: null,
+    cur: [row, col],
+    isNew: true,
+  });
 };
