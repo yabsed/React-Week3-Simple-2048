@@ -3,12 +3,8 @@
 export const BOARD_SIZE = 4;
 export const WINNING_COND = 128;
 
-const rotate = (board, times = 1) => {
-  let rotated = board;
-  for (let t = 0; t < times; t++) {
-    rotated = rotated[0].map((_, i) => rotated.map((row) => row[i]).reverse());
-  }
-  return rotated;
+const rotate = (board) => {
+  return board[0].map((_, i) => board.map((row) => row[i]).reverse());
 };
 
 const moveAndMergeLeft = (board) => {
@@ -34,9 +30,9 @@ export const move = (board, dir) => {
   let workingBoard = board.map((row) => row.slice());
 
   // Rotate board to simplify movement logic
-  if (dir === "up") workingBoard = rotate(workingBoard, 3);
-  if (dir === "right") workingBoard = rotate(workingBoard, 2);
-  if (dir === "down") workingBoard = rotate(workingBoard, 1);
+  if (dir === "up") workingBoard = rotate(rotate(rotate(workingBoard)));
+  if (dir === "right") workingBoard = rotate(rotate(workingBoard));
+  if (dir === "down") workingBoard = rotate(workingBoard);
 
   // Move and merge left
   const result = moveAndMergeLeft(workingBoard);
@@ -44,9 +40,9 @@ export const move = (board, dir) => {
   const score = result.score;
 
   // Rotate back to original orientation
-  if (dir === "up") workingBoard = rotate(workingBoard, 1);
-  if (dir === "right") workingBoard = rotate(workingBoard, 2);
-  if (dir === "down") workingBoard = rotate(workingBoard, 3);
+  if (dir === "up") workingBoard = rotate(workingBoard);
+  if (dir === "right") workingBoard = rotate(rotate(workingBoard));
+  if (dir === "down") workingBoard = rotate(rotate(rotate(workingBoard)));
 
   return { board: workingBoard, score: score };
 };
@@ -56,7 +52,6 @@ export const move = (board, dir) => {
 export const isBoardEqual = (boardA, boardB) => {
   for (let i = 0; i < BOARD_SIZE; i++) {
     for (let j = 0; j < BOARD_SIZE; j++) {
-      console.log("Why");
       if (boardA[i][j] !== boardB[i][j]) return false;
     }
   }
