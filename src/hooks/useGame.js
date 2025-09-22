@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { initMap, updateMap, judge } from "../utils/gameLogic";
+import {
+  initMap,
+  updateMap,
+  getMoveTransitions,
+  judge,
+} from "../utils/gameLogic";
 
 function getLocalStorage(key, defaultValue) {
   const saved = localStorage.getItem(key);
@@ -40,7 +45,12 @@ export function useGame() {
       default: {
         setBoardHist((history) => [...history, board]);
         setScoreHist((history) => [...history, score]);
-        const { board: newBoard, score: addedScore } = updateMap(board, dir);
+        const {
+          movedBoard: newBoard,
+          transitions: transitions,
+          score: addedScore,
+        } = getMoveTransitions(board, dir);
+        console.log(transitions);
         setBoard(newBoard);
         setScore((prevScore) => prevScore + addedScore);
         break;

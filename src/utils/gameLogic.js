@@ -140,3 +140,116 @@ export const judge = (board) => {
   if (isLost(board)) return "lost";
   return "continue";
 };
+
+export const getMoveTransitions = (board, dir) => {
+  let tileIdCounter = 0;
+
+  const size = board.length;
+  const transitions = [];
+  const movedBoard = Array(size)
+    .fill(0)
+    .map(() => Array(size).fill(0));
+  let score = 0;
+
+  const isHorizontal = dir === "left" || dir === "right";
+  const isForward = dir === "right" || dir === "down";
+
+  for (let i = 0; i < size; i++) {
+    // 1. 한 줄(행 또는 열)씩 처리
+    const lineCoords = [];
+    for (let j = 0; j < size; j++) {
+      lineCoords.push(isHorizontal ? [i, j] : [j, i]);
+    }
+
+    let tileObjects = lineCoords
+      .map(([r, c]) => ({ value: board[r][c], r, c }))
+      .filter((t) => t.value !== 0);
+
+    if (isForward) {
+      tileObjects.reverse();
+    }
+
+    // 2. 타일 병합
+    const mergedTiles = [];
+    for (let j = 0; j < tileObjects.length; j++) {
+      if (
+        j + 1 < tileObjects.length &&
+        tileObjects[j].value === tileObjects[j + 1].value
+      ) {
+        const survivor = tileObjects[j];
+        const victim = tileObjects[j + 1];
+
+        survivor.value *= 2;
+        score += survivor.value;
+
+        // 사라질 타일(victim) 정보를 survivor에 임시 저장
+        survivor.mergedFrom = victim;
+
+        mergedTiles.push(survivor);
+        j++; // victim 타일은 건너뜀
+      } else {
+        mergedTiles.push(tileObjects[j]);
+      }
+    }
+
+    // 3. 새 위치 계산 및 전환 정보 객체 생성
+    const newLineCoords = isForward ? lineCoords.slice().reverse() : lineCoords;
+
+    mergedTiles.forEach((tile, index) => {
+      const [newR, newC] = newLineCoords[index];
+      movedBoard[newR][newC] = tile.value;
+
+      // "합쳐져서 사라진 블록"에 대한 정보 추가
+      if (tile.mergedFrom) {
+        transitions.push({
+          id: tileIdCounter++,
+          value: tile.value,
+          prev: null,
+          cur: [newR, newC],
+        });
+        transitions.push({
+          id: tileIdCounter++,
+          value: tile.value,
+          prev: [tile.r, tile.c],
+          cur: null,
+        });
+        transitions.push({
+          id: tileIdCounter++,
+          value: tile.mergedFrom.value / 2, // 병합 전 원래 값
+          prev: [tile.mergedFrom.r, tile.mergedFrom.c],
+          cur: null, // 이 블록은 사라짐
+        });
+      } else {
+        transitions.push({
+          id: tileIdCounter++,
+          value: tile.value,
+          prev: [tile.r, tile.c],
+          cur: [newR, newC],
+        });
+      }
+    });
+  }
+
+  const emptyCells = getEmptyCells(movedBoard);
+  let finalBoard = movedBoard;
+  if (emptyCells.length > 0) {
+    // 새 블록 추가 위치와 값 추출
+    const randomIndex = Math.floor(Math.random() * emptyCells.length);
+    const [row, col] = emptyCells[randomIndex];
+    const newValue = Math.random() < 0.9 ? 2 : 4;
+
+    finalBoard = movedBoard.map((arr) => arr.slice());
+    finalBoard[row][col] = newValue;
+
+    // 새 블록의 transition 정보 추가
+    transitions.push({
+      id: tileIdCounter++,
+      value: newValue,
+      prev: null,
+      cur: [row, col],
+      isNew: true,
+    });
+  }
+
+  return { movedBoard: finalBoard, transitions, score };
+};
