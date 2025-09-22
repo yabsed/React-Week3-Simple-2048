@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
 
 const CELL_SIZE = 40;
-const CELL_MARGIN = 2;
+const CELL_MARGIN = 1;
 const CELL_TOTAL_SIZE = CELL_SIZE + CELL_MARGIN * 2;
 
 // AnimatedCell 컴포넌트
 function AnimatedCell({ transition }) {
   const [position, setPosition] = useState({
     x: transition.prev
-      ? transition.prev[1] * CELL_TOTAL_SIZE
+      ? transition.prev[1] * CELL_TOTAL_SIZE + CELL_MARGIN
       : transition.cur
-      ? transition.cur[1] * CELL_TOTAL_SIZE
+      ? transition.cur[1] * CELL_TOTAL_SIZE + CELL_MARGIN
       : 0,
     y: transition.prev
-      ? transition.prev[0] * CELL_TOTAL_SIZE
+      ? transition.prev[0] * CELL_TOTAL_SIZE + CELL_MARGIN
       : transition.cur
-      ? transition.cur[0] * CELL_TOTAL_SIZE
+      ? transition.cur[0] * CELL_TOTAL_SIZE + CELL_MARGIN
       : 0,
   });
   const [scale, setScale] = useState(transition.isNew ? 0 : 1);
@@ -42,8 +42,8 @@ function AnimatedCell({ transition }) {
       if (transition.cur && transition.prev) {
         // 이동 애니메이션
         setPosition({
-          x: transition.cur[1] * CELL_TOTAL_SIZE,
-          y: transition.cur[0] * CELL_TOTAL_SIZE,
+          x: transition.cur[1] * CELL_TOTAL_SIZE + CELL_MARGIN,
+          y: transition.cur[0] * CELL_TOTAL_SIZE + CELL_MARGIN,
         });
       }
 
@@ -87,7 +87,9 @@ function AnimatedCell({ transition }) {
     color: colors[transition.value]?.color || "#776e65",
     fontWeight: "bold",
     fontSize:
-      transition.value < 8
+      transition.value === 0
+        ? "16px"
+        : transition.value < 8
         ? "20px"
         : transition.value < 128
         ? "18px"

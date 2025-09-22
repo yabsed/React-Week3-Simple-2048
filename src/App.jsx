@@ -20,7 +20,7 @@ function App() {
   const gameResult = judge(board);
 
   return (
-    <>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}> 
       <h1>Hello 2048!</h1>
       <h2>Current Score : {score}</h2>
       {gameResult === "continue" ? null : gameResult === "won" ? (
@@ -37,7 +37,7 @@ function App() {
         transitions={transitions}
         isAnimating={isAnimating}
       />
-    </>
+    </div>
   );
 }
 
